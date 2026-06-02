@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用AI生成HTML演示文稿 vs 传统PPT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cream:#F5F0E6;--turquoise:#7ECDC0;--soft-pink:#F7C8D4;--butter:#FDE68A;
+  --mint:#A8E6CF;--lavender:#D4A5E8;--peach:#FFCBA4;--sky:#A8D8F0;--coral:#F8635F;
+  --text-dark:#2D2D2D;--text-muted:#6B6B6B;
+  --border:#2D2D2D;--border-width:3px;--radius:20px;--radius-lg:28px;
+  --shadow:6px 6px 0 var(--border);--shadow-sm:4px 4px 0 var(--border);
+  --font-display:'Noto Sans SC','Fredoka One',cursive;--font-body:'Noto Sans SC','Quicksand',sans-serif;
+}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font-body);color:var(--text-dark);background:var(--cream)}
+
+.slides-container{width:100vw;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scroll-behavior:smooth}
+.slide{width:100vw;height:100vh;min-height:100vh;scroll-snap-align:start;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:40px 60px}
+
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:900;letter-spacing:.02em}
+h1{font-size:clamp(2.5rem,5vw,4.5rem);line-height:1.1}
+h2{font-size:clamp(1.8rem,3.5vw,3rem);line-height:1.15}
+h3{font-size:clamp(1.3rem,2vw,1.8rem);line-height:1.2}
+p{font-size:clamp(.95rem,1.3vw,1.15rem);line-height:1.6}
+
+.card{background:#fff;border:var(--border-width) solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.deco{position:absolute;pointer-events:none;z-index:1}
+.deco svg{width:100%;height:100%;display:block}
+
+.nav-dots{position:fixed;right:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:100}
+.nav-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:#fff;cursor:pointer;transition:all .2s}
+.nav-dot.active{background:var(--butter);transform:scale(1.2)}
+.slide-counter{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;border:var(--border-width) solid var(--border);border-radius:50px;padding:6px 20px;font-family:var(--font-display);font-size:.8rem;z-index:100;box-shadow:var(--shadow-sm)}
+
+/* 动画效果 */
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-15px) rotate(5deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-50px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+@keyframes twinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+@keyframes wave{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+
+.animate-float{animation:float 3s ease-in-out infinite}
+.animate-pulse{animation:pulse 2s ease-in-out infinite}
+.animate-spin{animation:spin 10s linear infinite}
+.animate-bounce{animation:bounce 2s ease-in-out infinite}
+.animate-wave{animation:wave 2s ease-in-out infinite}
+.animate-twinkle{animation:twinkle 1.5s ease-in-out infinite}
+
+.slide.active .title-box{animation:fadeInUp 0.8s ease-out}
+.slide.active .welcome-frame{animation:fadeInUp 0.8s ease-out}
+.slide.active .features-grid .feature-card{animation:fadeInUp 0.6s ease-out backwards}
+.slide.active .features-grid .feature-card:nth-child(1){animation-delay:0.1s}
+.slide.active .features-grid .feature-card:nth-child(2){animation-delay:0.2s}
+.slide.active .features-grid .feature-card:nth-child(3){animation-delay:0.3s}
+.slide.active .features-grid .feature-card:nth-child(4){animation-delay:0.4s}
+.slide.active .features-grid .feature-card:nth-child(5){animation-delay:0.5s}
+.slide.active .features-grid .feature-card:nth-child(6){animation-delay:0.6s}
+.slide.active .timeline-row{animation:slideInLeft 0.6s ease-out backwards}
+.slide.active .timeline-row:nth-child(1){animation-delay:0.1s}
+.slide.active .timeline-row:nth-child(2){animation-delay:0.2s}
+.slide.active .timeline-row:nth-child(3){animation-delay:0.3s}
+.slide.active .timeline-row:nth-child(4){animation-delay:0.4s}
+.slide.active .timeline-row:nth-child(5){animation-delay:0.5s}
+.slide.active .cards-grid .info-card{animation:fadeInUp 0.6s ease-out backwards}
+.slide.active .cards-grid .info-card:nth-child(1){animation-delay:0.1s}
+.slide.active .cards-grid .info-card:nth-child(2){animation-delay:0.2s}
+.slide.active .cards-grid .info-card:nth-child(3){animation-delay:0.3s}
+.slide.active .cards-grid .info-card:nth-child(4){animation-delay:0.4s}
+.slide.active .quote-box{animation:fadeInUp 0.8s ease-out}
+.slide.active .process-step{animation:fadeInUp 0.6s ease-out backwards}
+.slide.active .process-step:nth-child(1){animation-delay:0.1s}
+.slide.active .process-step:nth-child(3){animation-delay:0.2s}
+.slide.active .process-step:nth-child(5){animation-delay:0.3s}
+.slide.active .process-step:nth-child(7){animation-delay:0.4s}
+.slide.active .compare-table{animation:fadeInUp 0.8s ease-out}
+
+/* SLIDE 1: Title */
+.slide-title{background:var(--cream)}
+.slide-title .title-box{text-align:center;z-index:2;position:relative}
+.slide-title h1{color:var(--text-dark);margin-bottom:12px;font-size:clamp(3.2rem,7vw,5.5rem)}
+.slide-title .subtitle{font-family:var(--font-body);font-weight:600;font-size:clamp(1rem,1.8vw,1.4rem);color:var(--text-muted);margin-top:16px}
+.slide-title .deco-daisy-tl{top:-30px;left:-30px;width:180px;height:180px}
+.slide-title .deco-daisy-tr{top:20px;right:-20px;width:150px;height:150px}
+.slide-title .deco-daisy-bl{bottom:-40px;left:20px;width:160px;height:160px}
+.slide-title .deco-daisy-br{bottom:10px;right:-30px;width:170px;height:170px}
+.slide-title .deco-star-1{top:12%;left:6%;width:70px;height:70px}
+.slide-title .deco-star-2{bottom:18%;left:10%;width:55px;height:55px}
+.slide-title .deco-star-3{top:18%;right:8%;width:60px;height:60px}
+
+/* SLIDE 2: Welcome */
+.slide-welcome{background:var(--cream)}
+.welcome-frame{width:100%;max-width:880px;position:relative;z-index:2}
+.welcome-header{background:var(--mint);border:var(--border-width) solid var(--border);border-bottom:none;border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:18px 32px;text-align:center}
+.welcome-header h2{font-size:clamp(1.4rem,2.5vw,2rem);color:var(--text-dark)}
+.welcome-body{background:#fff;border:var(--border-width) solid var(--border);border-radius:0 0 var(--radius-lg) var(--radius-lg);padding:36px 48px;box-shadow:var(--shadow)}
+.welcome-list{list-style:none;display:flex;flex-direction:column;gap:18px}
+.welcome-list li{font-size:clamp(.95rem,1.4vw,1.15rem);font-weight:600;padding-left:36px;position:relative;line-height:1.5}
+.welcome-list li::before{content:"";position:absolute;left:0;top:4px;width:20px;height:20px;background:var(--butter);border:2px solid var(--border);border-radius:50%}
+.slide-welcome .deco-sun{top:6%;left:4%;width:120px;height:120px}
+.slide-welcome .deco-rainbow{bottom:4%;right:3%;width:150px;height:110px}
+.slide-welcome .deco-star-1{top:14%;right:7%;width:60px;height:60px}
+
+/* SLIDE 3: Features Grid */
+.slide-features{background:var(--turquoise);padding:30px 40px}
+.slide-features h2{text-align:center;color:#fff;text-shadow:3px 3px 0 var(--border);margin-bottom:28px;font-size:clamp(1.8rem,3.5vw,3rem);position:relative;z-index:2}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%;max-width:1100px;z-index:2;position:relative}
+.feature-card{background:#fff;border:var(--border-width) solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+.feature-header{padding:14px 12px;text-align:center;font-family:var(--font-display);font-size:clamp(.9rem,1.4vw,1.2rem);border-bottom:var(--border-width) solid var(--border)}
+.feature-header.pink{background:var(--soft-pink)}.feature-header.green{background:var(--mint)}.feature-header.coral{background:var(--coral);color:#fff}.feature-header.yellow{background:var(--butter)}.feature-header.lavender{background:var(--lavender)}.feature-header.sky{background:var(--sky)}
+.feature-body{padding:18px 16px}
+.feature-body p{font-size:clamp(.85rem,1.1vw,1rem);font-weight:600;line-height:1.5}
+.slide-features .deco-daisy-tl{top:-20px;left:-25px;width:130px;height:130px}
+.slide-features .deco-daisy-br{bottom:-25px;right:-20px;width:140px;height:140px}
+
+/* SLIDE 4: Timeline */
+.slide-timeline{background:var(--soft-pink)}
+.slide-timeline h2{text-align:center;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.2);margin-bottom:32px;z-index:2;position:relative}
+.timeline-wrap{display:flex;flex-direction:column;gap:16px;width:100%;max-width:750px;z-index:2;position:relative}
+.timeline-row{display:flex;align-items:center;gap:20px}
+.timeline-dot{width:50px;height:50px;border-radius:50%;border:var(--border-width) solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.1rem;color:#fff}
+.timeline-dot.d1{background:var(--coral)}.timeline-dot.d2{background:var(--mint)}.timeline-dot.d3{background:var(--sky)}.timeline-dot.d4{background:var(--lavender)}.timeline-dot.d5{background:var(--butter);color:var(--text-dark)}
+.timeline-card{flex:1;background:#fff;border:var(--border-width) solid var(--border);border-radius:var(--radius);padding:16px 24px;box-shadow:var(--shadow-sm)}
+.timeline-card h4{margin-bottom:6px;font-size:1.1rem}.timeline-card p{font-size:.9rem;color:var(--text-muted);font-weight:500}
+.slide-timeline .deco-cloud{top:6%;right:5%;width:130px;height:130px}
+.slide-timeline .deco-star-1{top:14%;left:6%;width:55px;height:55px}
+
+/* SLIDE 5: Info Cards */
+.slide-cards{background:var(--cream)}
+.slide-cards h2{text-align:center;margin-bottom:32px;z-index:2;position:relative}
+.cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;width:100%;max-width:850px;z-index:2;position:relative}
+.info-card{background:#fff;border:var(--border-width) solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px}
+.info-card .card-icon{width:48px;height:48px;border-radius:50%;border:var(--border-width) solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;margin-bottom:4px}
+.info-card .card-icon.i1{background:var(--soft-pink)}.info-card .card-icon.i2{background:var(--mint)}.info-card .card-icon.i3{background:var(--sky)}.info-card .card-icon.i4{background:var(--lavender)}
+.info-card h4{font-size:1.2rem}.info-card p{font-size:.9rem;color:var(--text-muted);font-weight:500;line-height:1.55}
+.slide-cards .deco-rainbow{top:4%;right:3%;width:130px;height:95px}
+.slide-cards .deco-daisy-tl{top:-15px;left:-15px;width:110px;height:110px}
+.slide-cards .deco-sun{bottom:4%;right:4%;width:100px;height:100px}
+
+/* SLIDE 6: Quote */
+.slide-quote{background:var(--lavender)}
+.quote-box{background:#fff;border:var(--border-width) solid var(--border);border-radius:var(--radius-lg);padding:48px 56px;box-shadow:var(--shadow);max-width:750px;width:100%;text-align:center;z-index:2;position:relative}
+.quote-mark{font-family:var(--font-display);font-size:4rem;line-height:1;color:var(--soft-pink);margin-bottom:8px}
+.quote-text{font-family:var(--font-display);font-size:clamp(1.3rem,2.5vw,2rem);line-height:1.35;color:var(--text-dark);margin-bottom:20px}
+.quote-author{font-weight:700;font-size:1rem;color:var(--text-muted)}
+.slide-quote .deco-daisy-tl{top:4%;left:4%;width:120px;height:120px}
+.slide-quote .deco-daisy-br{bottom:4%;right:4%;width:130px;height:130px}
+.slide-quote .deco-star-1{top:10%;right:12%;width:60px;height:60px}
+
+/* SLIDE 7: Process */
+.slide-process{background:var(--peach)}
+.slide-process h2{text-align:center;margin-bottom:40px;z-index:2;position:relative}
+.process-flow{display:flex;align-items:flex-start;justify-content:center;gap:16px;width:100%;max-width:1000px;z-index:2;position:relative}
+.process-step{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
+.process-arrow{font-family:var(--font-display);font-size:2rem;color:var(--border);margin-top:35px;flex-shrink:0}
+.step-circle{width:80px;height:80px;border-radius:50%;border:var(--border-width) solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.8rem;color:#fff;box-shadow:var(--shadow-sm);flex-shrink:0}
+.step-circle.s1{background:var(--coral)}.step-circle.s2{background:var(--turquoise)}.step-circle.s3{background:var(--lavender)}.step-circle.s4{background:var(--sky)}
+.step-title{font-family:var(--font-display);font-size:1.1rem}
+.step-desc{font-size:.85rem;font-weight:600;color:var(--text-muted);line-height:1.45;max-width:180px}
+.slide-process .deco-cloud{top:6%;left:4%;width:120px;height:120px}
+.slide-process .deco-star-1{bottom:10%;left:7%;width:55px;height:55px}
+
+/* SLIDE 8: Comparison */
+.slide-compare{background:var(--mint)}
+.slide-compare h2{text-align:center;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.15);margin-bottom:32px;z-index:2;position:relative}
+.compare-table{background:#fff;border:var(--border-width) solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);width:100%;max-width:900px;z-index:2;position:relative}
+.compare-table table{width:100%;border-collapse:collapse}
+.compare-table th,.compare-table td{padding:14px 18px;text-align:left;border-bottom:2px solid var(--border)}
+.compare-table th{background:var(--butter);font-family:var(--font-display);font-size:.95rem}
+.compare-table th:first-child{background:var(--soft-pink)}
+.compare-table td{font-weight:600;font-size:.9rem}
+.compare-table td:first-child{font-weight:700}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table .yes{color:var(--turquoise)}
+.compare-table .warn{color:var(--coral)}
+.slide-compare .deco-daisy-tl{top:-10px;left:-10px;width:120px;height:120px}
+.slide-compare .deco-daisy-tr{top:10px;right:-15px;width:110px;height:110px}
+.slide-compare .deco-star-1{bottom:10%;left:5%;width:55px;height:55px}
+
+/* 响应式设计 - 平板 */
+@media(max-width:1024px){
+  .slide{padding:30px 40px}
+  .features-grid{grid-template-columns:repeat(2,1fr);gap:14px}
+  .cards-grid{gap:18px}
+  .process-flow{gap:12px}
+  .welcome-body{padding:28px 36px}
+}
+
+/* 响应式设计 - 手机 */
+@media(max-width:768px){
+  .slide{padding:20px 16px;min-height:100vh;height:auto}
+  .slide-welcome,.slide-features,.slide-timeline,.slide-cards,.slide-quote,.slide-process,.slide-compare{padding-top:60px;padding-bottom:40px}
+  
+  h1{font-size:clamp(1.8rem,6vw,2.5rem)}
+  h2{font-size:clamp(1.4rem,5vw,2rem);margin-bottom:20px!important}
+  h3{font-size:clamp(1.1rem,4vw,1.5rem)}
+  p{font-size:clamp(.85rem,3vw,1rem)}
+  
+  .welcome-frame{max-width:100%}
+  .welcome-header{padding:14px 20px}
+  .welcome-header h2{font-size:clamp(1.1rem,4vw,1.5rem)}
+  .welcome-body{padding:20px 18px}
+  .welcome-list{gap:14px}
+  .welcome-list li{font-size:clamp(.85rem,3vw,1rem);padding-left:28px}
+  .welcome-list li::before{width:16px;height:16px;top:2px}
+  
+  .features-grid{grid-template-columns:1fr;gap:12px;max-width:100%}
+  .feature-header{padding:10px 10px;font-size:clamp(.85rem,3.5vw,1rem)}
+  .feature-body{padding:14px 12px}
+  .feature-body p{font-size:clamp(.8rem,3vw,.95rem)}
+  
+  .timeline-wrap{gap:12px;max-width:100%}
+  .timeline-row{gap:12px;flex-wrap:nowrap}
+  .timeline-dot{width:40px;height:40px;font-size:.9rem;flex-shrink:0}
+  .timeline-card{padding:12px 16px}
+  .timeline-card h4{font-size:.95rem;margin-bottom:4px}
+  .timeline-card p{font-size:.8rem}
+  
+  .cards-grid{grid-template-columns:1fr;gap:14px;max-width:100%}
+  .info-card{padding:18px;gap:10px}
+  .info-card .card-icon{width:40px;height:40px;font-size:1.1rem}
+  .info-card h4{font-size:1rem}
+  .info-card p{font-size:.8rem}
+  
+  .quote-box{padding:28px 20px;margin:0 8px}
+  .quote-mark{font-size:2.5rem;margin-bottom:4px}
+  .quote-text{font-size:clamp(1.1rem,4vw,1.5rem);margin-bottom:14px}
+  .quote-author{font-size:.85rem}
+  
+  .process-flow{flex-direction:column;align-items:center;gap:10px;max-width:100%}
+  .process-step{flex:none;width:100%;flex-direction:row;justify-content:flex-start;text-align:left;gap:16px}
+  .process-arrow{transform:rotate(90deg);margin:0;font-size:1.5rem}
+  .step-circle{width:60px;height:60px;font-size:1.4rem;flex-shrink:0}
+  .step-title{font-size:1rem}
+  .step-desc{font-size:.8rem;max-width:100%;flex:1}
+  
+  .compare-table{max-width:100%;overflow-x:auto}
+  .compare-table th,.compare-table td{padding:10px 12px;font-size:.8rem}
+  .compare-table th{font-size:.85rem}
+  
+  .nav-dots{display:none}
+  .slide-counter{bottom:12px;padding:5px 14px;font-size:.7rem}
+  
+  .deco{opacity:.5;transform:scale(0.7)}
+  .deco-daisy-tl,.deco-daisy-tr,.deco-daisy-br{width:80px!important;height:80px!important}
+  .deco-sun{width:70px!important;height:70px!important}
+  .deco-rainbow{width:90px!important;height:65px!important}
+  .deco-cloud{width:80px!important;height:80px!important}
+  .deco-star-1{width:40px!important;height:40px!important}
+}
+
+/* 响应式设计 - 小屏手机 */
+@media(max-width:480px){
+  .slide{padding:16px 12px;padding-top:50px;padding-bottom:30px}
+  
+  h1{font-size:1.5rem}
+  h2{font-size:1.2rem;margin-bottom:16px!important}
+  p{font-size:.8rem}
+  
+  .welcome-header{padding:12px 16px}
+  .welcome-header h2{font-size:1rem}
+  .welcome-body{padding:16px 14px}
+  .welcome-list{gap:10px}
+  .welcome-list li{font-size:.85rem;padding-left:24px}
+  
+  .features-grid{gap:10px}
+  .feature-header{padding:8px;font-size:.85rem}
+  .feature-body{padding:10px}
+  .feature-body p{font-size:.8rem}
+  
+  .timeline-dot{width:36px;height:36px;font-size:.8rem}
+  .timeline-card{padding:10px 12px}
+  .timeline-card h4{font-size:.85rem}
+  .timeline-card p{font-size:.75rem}
+  
+  .info-card{padding:14px;gap:8px}
+  .info-card .card-icon{width:36px;height:36px;font-size:1rem}
+  .info-card h4{font-size:.9rem}
+  .info-card p{font-size:.75rem}
+  
+  .quote-box{padding:20px 16px}
+  .quote-mark{font-size:2rem}
+  .quote-text{font-size:1rem}
+  .quote-author{font-size:.8rem}
+  
+  .step-circle{width:50px;height:50px;font-size:1.2rem}
+  .step-title{font-size:.9rem}
+  .step-desc{font-size:.75rem}
+  
+  .compare-table th,.compare-table td{padding:8px 10px;font-size:.75rem}
+  
+  .deco{opacity:.4;transform:scale(0.6)}
+  .slide-counter{font-size:.65rem;padding:4px 12px}
+}
+
+/* 编辑工具栏响应式 */
+@media(max-width:768px){
+  .edit-toolbar{left:10px!important;top:10px!important;min-width:180px;max-width:calc(100vw - 20px)}
+  .toolbar-header{padding:10px 12px;font-size:12px}
+  .toolbar-body{padding:12px;gap:10px}
+  .tool-section label{font-size:11px}
+  .size-btn{width:32px;height:32px}
+  .size-value{font-size:12px;padding:4px}
+  .text-editor{min-height:60px;font-size:12px}
+  .move-btn{width:32px;height:32px;font-size:14px}
+  .save-btn,.reset-btn,.apply-btn,.confirm-btn{padding:8px;font-size:12px}
+  .graphic-tips{padding:8px;font-size:11px}
+}
+
+@media(max-width:480px){
+  .edit-toolbar{min-width:160px;left:5px!important;top:5px!important}
+  .toolbar-header{padding:8px 10px;font-size:11px}
+  .drag-handle{font-size:14px}
+  .toggle-btn{padding:3px 8px;font-size:11px}
+  .toolbar-body{padding:10px;gap:8px}
+  .size-btn{width:28px;height:28px}
+  .hint-text{font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="slides-container" id="slideContainer">
+
+<!-- SLIDE 1: Title -->
+<section class="slide slide-title active" id="slide-1">
+  <div class="deco deco-daisy-tl animate-float"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="35" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="115" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="47" rx="12" ry="22" transform="rotate(-45 47 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="103" rx="12" ry="22" transform="rotate(-45 103 103)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="47" rx="12" ry="22" transform="rotate(45 103 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="103" rx="12" ry="22" transform="rotate(45 47 103)" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-daisy-tr animate-float" style="animation-delay:0.5s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="35" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="115" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="47" rx="12" ry="22" transform="rotate(-45 47 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="103" rx="12" ry="22" transform="rotate(-45 103 103)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="47" rx="12" ry="22" transform="rotate(45 103 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="103" rx="12" ry="22" transform="rotate(45 47 103)" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-daisy-bl animate-float" style="animation-delay:1s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="35" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="115" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="47" rx="12" ry="22" transform="rotate(-45 47 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="103" rx="12" ry="22" transform="rotate(-45 103 103)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="47" rx="12" ry="22" transform="rotate(45 103 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="103" rx="12" ry="22" transform="rotate(45 47 103)" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-daisy-br animate-float" style="animation-delay:1.5s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="35" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="115" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="47" rx="12" ry="22" transform="rotate(-45 47 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="103" rx="12" ry="22" transform="rotate(-45 103 103)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="103" cy="47" rx="12" ry="22" transform="rotate(45 103 47)" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="47" cy="103" rx="12" ry="22" transform="rotate(45 47 103)" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-1 animate-twinkle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#FDE68A" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-2 animate-twinkle" style="animation-delay:0.3s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#F7C8D4" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-3 animate-twinkle" style="animation-delay:0.6s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#A8E6CF" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="title-box">
+    <h1>为什么我强烈推荐<br>用AI生成HTML演示文稿？</h1>
+    <div class="subtitle">告别PPT焦虑，拥抱更高效的演示方式 ✨</div>
+  </div>
+</section>
+
+<!-- SLIDE 2: Welcome -->
+<section class="slide slide-welcome" id="slide-2">
+  <div class="deco deco-sun animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="22" fill="#FDE68A" stroke="#232323" stroke-width="2"/><line x1="50" y1="15" x2="50" y2="25" stroke="#232323" stroke-width="2"/><line x1="50" y1="75" x2="50" y2="85" stroke="#232323" stroke-width="2"/><line x1="15" y1="50" x2="25" y2="50" stroke="#232323" stroke-width="2"/><line x1="75" y1="50" x2="85" y2="50" stroke="#232323" stroke-width="2"/><line x1="25" y1="25" x2="32" y2="32" stroke="#232323" stroke-width="2"/><line x1="68" y1="68" x2="75" y2="75" stroke="#232323" stroke-width="2"/><line x1="25" y1="75" x2="32" y2="68" stroke="#232323" stroke-width="2"/><line x1="68" y1="32" x2="75" y2="25" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-rainbow animate-wave"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 130"><path d="M20 100 Q90 20 160 100" fill="none" stroke="#F8635F" stroke-width="8" stroke-linecap="round"/><path d="M35 100 Q90 35 145 100" fill="none" stroke="#FDE68A" stroke-width="8" stroke-linecap="round"/><path d="M50 100 Q90 50 130 100" fill="none" stroke="#A8E6CF" stroke-width="8" stroke-linecap="round"/><path d="M65 100 Q90 65 115 100" fill="none" stroke="#7ECDC0" stroke-width="8" stroke-linecap="round"/></svg></div>
+  <div class="deco deco-star-1 animate-twinkle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#FDE68A" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="welcome-frame">
+    <div class="welcome-header">
+      <h2>我的转变 💡</h2>
+    </div>
+    <div class="welcome-body">
+      <ul class="welcome-list">
+        <li>我之前也是PPT重度用户</li>
+        <li>但自从用了HTML做演示</li>
+        <li>真的回不去了！</li>
+        <li>接下来分享四个核心优势</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3: Features Grid -->
+<section class="slide slide-features" id="slide-3">
+  <div class="deco deco-daisy-tl animate-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="35" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="115" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-daisy-br animate-spin" style="animation-direction:reverse"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="35" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="115" cy="75" rx="25" ry="12" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <h2>💻 代码驱动，稳定性超强</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-header pink">PPT的痛点</div>
+      <div class="feature-body"><p>让AI生成PPT，每次格式都不一样</p></div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-header coral">字体乱跳</div>
+      <div class="feature-body"><p>排版错位，改到崩溃</p></div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-header green">HTML优势</div>
+      <div class="feature-body"><p>代码结构清晰、逻辑明确</p></div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-header yellow">样式固定</div>
+      <div class="feature-body"><p>AI生成一次，样式就固定了</p></div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-header lavender">不是盲盒</div>
+      <div class="feature-body"><p>不会每次生成都是惊喜</p></div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-header sky">版本管理</div>
+      <div class="feature-body"><p>改错了随时回退，特别安心</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 4: Timeline -->
+<section class="slide slide-timeline" id="slide-4">
+  <div class="deco deco-cloud animate-float"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><path d="M25 50 Q10 50 10 35 Q10 20 25 20 Q25 10 40 10 Q55 10 55 20 Q70 15 80 25 Q95 25 90 40 Q95 55 75 50 Z" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-1 animate-twinkle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#FDE68A" stroke="#232323" stroke-width="2"/></svg></div>
+  <h2>✨ 视觉效果拉满</h2>
+  <div class="timeline-wrap">
+    <div class="timeline-row">
+      <div class="timeline-dot d1">1</div>
+      <div class="timeline-card"><h4>动态过渡效果</h4><p>翻页有渐入效果，流畅自然</p></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-dot d2">2</div>
+      <div class="timeline-card"><h4>点击交互</h4><p>鼠标悬停有反馈，生动有趣</p></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-dot d3">3</div>
+      <div class="timeline-card"><h4>嵌入多媒体</h4><p>视频、动画轻松嵌入演示</p></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-dot d4">4</div>
+      <div class="timeline-card"><h4>AI自动生成</h4><p>不需要手动做，说一句话就行</p></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-dot d5">5</div>
+      <div class="timeline-card"><h4>比静态PPT生动太多</h4><p>整体感觉更专业、更出色</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 5: Info Cards -->
+<section class="slide slide-cards" id="slide-5">
+  <div class="deco deco-rainbow animate-wave"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 130"><path d="M20 100 Q90 20 160 100" fill="none" stroke="#F8635F" stroke-width="8" stroke-linecap="round"/><path d="M35 100 Q90 35 145 100" fill="none" stroke="#FDE68A" stroke-width="8" stroke-linecap="round"/><path d="M50 100 Q90 50 130 100" fill="none" stroke="#A8E6CF" stroke-width="8" stroke-linecap="round"/></svg></div>
+  <div class="deco deco-daisy-tl animate-bounce"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-sun animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="22" fill="#FDE68A" stroke="#232323" stroke-width="2"/><line x1="50" y1="15" x2="50" y2="25" stroke="#232323" stroke-width="2"/><line x1="50" y1="75" x2="50" y2="85" stroke="#232323" stroke-width="2"/><line x1="15" y1="50" x2="25" y2="50" stroke="#232323" stroke-width="2"/><line x1="75" y1="50" x2="85" y2="50" stroke="#232323" stroke-width="2"/></svg></div>
+  <h2>🔗 分享特别容易</h2>
+  <div class="cards-grid">
+    <div class="info-card">
+      <div class="card-icon i1">😰</div>
+      <h4>传统PPT</h4>
+      <p>需要下载几十兆的文件，传输麻烦</p>
+    </div>
+    <div class="info-card">
+      <div class="card-icon i2">😊</div>
+      <h4>HTML演示</h4>
+      <p>浏览器直接打开，分享一个链接即可</p>
+    </div>
+    <div class="info-card">
+      <div class="card-icon i3">❌</div>
+      <h4>设备不兼容</h4>
+      <p>PPT容易乱码，HTML任何设备都能看</p>
+    </div>
+    <div class="info-card">
+      <div class="card-icon i4">✅</div>
+      <h4>一键分享</h4>
+      <p>发送链接，对方点开就看，无需等待</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6: Quote -->
+<section class="slide slide-quote" id="slide-6">
+  <div class="deco deco-daisy-tl animate-float"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-daisy-br animate-float" style="animation-delay:0.5s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-1 animate-twinkle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#FDE68A" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="quote-box">
+    <div class="quote-mark">"</div>
+    <div class="quote-text">想改标题？直接跟AI说"把标题改成28号字"。想换配色？说一句"帮我换成小清新风格"。整个过程就是聊天，特别自然。</div>
+    <div class="quote-author">— 自然语言控制，省时省力</div>
+  </div>
+</section>
+
+<!-- SLIDE 7: Process -->
+<section class="slide slide-process" id="slide-7">
+  <div class="deco deco-cloud animate-float"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><path d="M25 50 Q10 50 10 35 Q10 20 25 20 Q25 10 40 10 Q55 10 55 20 Q70 15 80 25 Q95 25 90 40 Q95 55 75 50 Z" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-1 animate-twinkle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#FDE68A" stroke="#232323" stroke-width="2"/></svg></div>
+  <h2>🗣️ 自然语言控制</h2>
+  <div class="process-flow">
+    <div class="process-step">
+      <div class="step-circle s1">💬</div>
+      <div class="step-title">说出需求</div>
+      <div class="step-desc">把标题改成28号字</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-circle s2">🤖</div>
+      <div class="step-title">AI理解</div>
+      <div class="step-desc">自动修改CSS代码</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-circle s3">✨</div>
+      <div class="step-title">即时生效</div>
+      <div class="step-desc">不用点击菜单找按钮</div>
+    </div>
+    <div class="process-arrow">→</div>
+    <div class="process-step">
+      <div class="step-circle s4">🎉</div>
+      <div class="step-title">完成</div>
+      <div class="step-desc">整个过程就是聊天</div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 8: Comparison -->
+<section class="slide slide-compare" id="slide-8">
+  <div class="deco deco-daisy-tl animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-daisy-tr animate-pulse" style="animation-delay:0.3s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><circle cx="75" cy="75" r="30" fill="#FCDF6C" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="35" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/><ellipse cx="75" cy="115" rx="12" ry="25" fill="#fff" stroke="#232323" stroke-width="2"/></svg></div>
+  <div class="deco deco-star-1 animate-twinkle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,55 75,85 50,68 25,85 34,55 12,35 39,35" fill="#FDE68A" stroke="#232323" stroke-width="2"/></svg></div>
+  <h2>四大核心优势 📊</h2>
+  <div class="compare-table">
+    <table>
+      <tr><th>优势</th><th>说明</th><th>效果</th></tr>
+      <tr><td>💻 代码驱动</td><td>结构清晰、逻辑明确</td><td class="yes">更稳定，不会乱</td></tr>
+      <tr><td>✨ 视觉效果</td><td>动态过渡、交互反馈</td><td class="yes">更生动，更出色</td></tr>
+      <tr><td>🔗 分享容易</td><td>一个链接即可访问</td><td class="yes">任何设备都能看</td></tr>
+      <tr><td>🗣️ 自然语言</td><td>聊天就能修改</td><td class="yes">省时省力</td></tr>
+    </table>
+  </div>
+</section>
+
+</div>
+
+<div class="nav-dots" id="navDots"></div>
+<div class="slide-counter" id="slideCounter">1 / 8</div>
+
+<!-- 编辑工具栏 -->
+<div class="edit-toolbar" id="editToolbar">
+  <div class="toolbar-header" id="toolbarHeader">
+    <span class="drag-handle">⋮⋮</span>
+    <span>🎨 编辑模式</span>
+    <button class="toggle-btn" id="toggleEdit">开启</button>
+  </div>
+  <div class="toolbar-body" id="toolbarBody" style="display:none;">
+    <div class="tool-section">
+      <label>文字大小</label>
+      <div class="size-controls">
+        <button class="size-btn" id="fontSmaller">A-</button>
+        <span class="size-value" id="fontSizeValue">100%</span>
+        <button class="size-btn" id="fontBigger">A+</button>
+      </div>
+    </div>
+    <div class="tool-section">
+      <label>图片大小</label>
+      <div class="size-controls">
+        <button class="size-btn" id="imgSmaller">🖼️-</button>
+        <span class="size-value" id="imgSizeValue">100%</span>
+        <button class="size-btn" id="imgBigger">🖼️+</button>
+      </div>
+    </div>
+    <div class="tool-section">
+      <label>选中元素</label>
+      <div class="selected-info" id="selectedInfo">点击选择元素</div>
+      <div class="hint-text">💡 框选图形：拖动鼠标画框选择</div>
+    </div>
+    <div class="tool-section">
+      <label>移动元素</label>
+      <div class="move-controls">
+        <div class="move-row">
+          <button class="move-btn" id="moveUp" title="向上移动">↑</button>
+        </div>
+        <div class="move-row">
+          <button class="move-btn" id="moveLeft" title="向左移动">←</button>
+          <button class="move-btn" id="moveDown" title="向下移动">↓</button>
+          <button class="move-btn" id="moveRight" title="向右移动">→</button>
+        </div>
+      </div>
+      <div class="hint-text">或使用键盘方向键</div>
+    </div>
+    <div class="tool-section" id="textEditSection">
+      <label>编辑文字内容</label>
+      <textarea class="text-editor" id="textEditor" placeholder="选择文字元素后在此编辑..."></textarea>
+      <button class="apply-btn" id="applyText">应用文字修改</button>
+    </div>
+    <div class="tool-section" id="graphicEditSection" style="display:none;">
+      <label>图形操作</label>
+      <div class="graphic-tips">
+        <div>🖱️ 拖动移动</div>
+        <div>🔄 滚轮缩放</div>
+        <div>⌨️ 方向键微调</div>
+      </div>
+      <button class="confirm-btn" id="confirmGraphic">确认修改</button>
+    </div>
+    <div class="tool-section">
+      <button class="reset-btn" id="resetAll">重置选中元素</button>
+    </div>
+    <div class="tool-section">
+      <button class="save-btn" id="saveHtml">💾 保存HTML文件</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.edit-toolbar {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  background: #fff;
+  border: 3px solid #2D2D2D;
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 #2D2D2D;
+  z-index: 1000;
+  min-width: 200px;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.toolbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #FDE68A;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 3px solid #2D2D2D;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: move;
+  user-select: none;
+}
+.drag-handle {
+  color: #6B6B6B;
+  font-size: 16px;
+  letter-spacing: -2px;
+}
+.toggle-btn {
+  background: #7ECDC0;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.toggle-btn:hover { background: #A8E6CF; }
+.toggle-btn.active { background: #F8635F; color: #fff; }
+.toolbar-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tool-section label {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #6B6B6B;
+}
+.size-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.size-btn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.size-btn:hover { background: #FDE68A; }
+.size-btn:active { transform: scale(0.95); }
+.size-value {
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  background: #F5F0E6;
+  padding: 6px;
+  border-radius: 6px;
+}
+.selected-info {
+  background: #F5F0E6;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: center;
+  border: 2px dashed #2D2D2D;
+}
+.hint-text {
+  font-size: 11px;
+  color: #6B6B6B;
+  margin-top: 4px;
+  text-align: center;
+}
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  background: #F7C8D4;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.reset-btn:hover { background: #D4A5E8; }
+.text-editor {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 13px;
+  resize: vertical;
+  background: #fff;
+}
+.text-editor:focus {
+  outline: none;
+  border-color: #7ECDC0;
+}
+.apply-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  background: #7ECDC0;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.apply-btn:hover { background: #A8E6CF; }
+.apply-btn:active { transform: scale(0.98); }
+.move-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.move-row {
+  display: flex;
+  gap: 4px;
+}
+.move-btn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.move-btn:hover { background: #FDE68A; }
+.move-btn:active { transform: scale(0.95); background: #F8635F; color: #fff; }
+.graphic-tips {
+  background: #E8F5E9;
+  border: 2px solid #7ECDC0;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  color: #2E7D32;
+}
+.graphic-tips div {
+  padding: 4px 0;
+}
+.confirm-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: #7ECDC0;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.confirm-btn:hover { background: #A8E6CF; }
+.confirm-btn:active { transform: scale(0.98); }
+.save-btn {
+  width: 100%;
+  padding: 10px;
+  background: #F8635F;
+  color: #fff;
+  border: 2px solid #2D2D2D;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+.save-btn:hover { background: #FF8A87; }
+.save-btn:active { transform: scale(0.98); }
+.element-selected {
+  outline: 3px dashed #F8635F !important;
+  outline-offset: 2px;
+}
+.edit-mode .slide h1,
+.edit-mode .slide h2,
+.edit-mode .slide h3,
+.edit-mode .slide h4,
+.edit-mode .slide p,
+.edit-mode .slide li,
+.edit-mode .slide td,
+.edit-mode .slide th,
+.edit-mode .deco svg {
+  cursor: pointer;
+  transition: outline 0.2s;
+}
+.edit-mode .slide h1:hover,
+.edit-mode .slide h2:hover,
+.edit-mode .slide h3:hover,
+.edit-mode .slide h4:hover,
+.edit-mode .slide p:hover,
+.edit-mode .slide li:hover,
+.edit-mode .slide td:hover,
+.edit-mode .slide th:hover,
+.edit-mode .deco:hover {
+  outline: 2px dashed #7ECDC0;
+  outline-offset: 2px;
+}
+</style>
+
+<script>
+// 工具栏拖动功能
+let toolbarDragging = false;
+let toolbarStartX, toolbarStartY;
+let toolbarLeft = 20, toolbarTop = 20;
+
+const editToolbar = document.getElementById('editToolbar');
+const toolbarHeader = document.getElementById('toolbarHeader');
+
+toolbarHeader.addEventListener('mousedown', (e) => {
+  if (e.target.closest('button')) return;
+  toolbarDragging = true;
+  toolbarStartX = e.clientX - toolbarLeft;
+  toolbarStartY = e.clientY - toolbarTop;
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!toolbarDragging) return;
+  toolbarLeft = Math.max(0, Math.min(window.innerWidth - 220, e.clientX - toolbarStartX));
+  toolbarTop = Math.max(0, Math.min(window.innerHeight - 100, e.clientY - toolbarStartY));
+  editToolbar.style.left = toolbarLeft + 'px';
+  editToolbar.style.top = toolbarTop + 'px';
+});
+
+document.addEventListener('mouseup', () => { toolbarDragging = false; });
+
+const container = document.getElementById('slideContainer');
+const slides = document.querySelectorAll('.slide');
+const navDots = document.getElementById('navDots');
+const slideCounter = document.getElementById('slideCounter');
+
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => slides[i].scrollIntoView({behavior:'smooth'});
+  navDots.appendChild(dot);
+});
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const index = Array.from(slides).indexOf(entry.target);
+      document.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === index));
+      slideCounter.textContent = `${index + 1} / ${slides.length}`;
+      slides.forEach(s => s.classList.remove('active'));
+      entry.target.classList.add('active');
+    }
+  });
+}, {threshold:0.5});
+
+slides.forEach(slide => observer.observe(slide));
+
+container.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  container.scrollBy({top:e.deltaY > 0 ? window.innerHeight : -window.innerHeight, behavior:'smooth'});
+}, {passive:false});
+
+// 键盘翻页功能
+document.addEventListener('keydown', (e) => {
+  // 如果正在编辑文字，不处理
+  if (document.activeElement === textEditor) return;
+  
+  // 编辑模式下有选中元素时，方向键用于移动元素
+  if (editMode && selectedElement) return;
+  
+  // 非编辑模式或无选中元素时，方向键翻页
+  if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', ' '].includes(e.key)) {
+    e.preventDefault();
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+      container.scrollBy({top: window.innerHeight, behavior: 'smooth'});
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      container.scrollBy({top: -window.innerHeight, behavior: 'smooth'});
+    }
+  }
+});
+
+// 编辑功能
+let editMode = false;
+let selectedElement = null;
+let fontScale = 1;
+let selectedImgScale = 1;
+const originalStyles = new Map();
+
+const toggleBtn = document.getElementById('toggleEdit');
+const toolbarBody = document.getElementById('toolbarBody');
+const fontSizeValue = document.getElementById('fontSizeValue');
+const imgSizeValue = document.getElementById('imgSizeValue');
+const selectedInfo = document.getElementById('selectedInfo');
+const textEditor = document.getElementById('textEditor');
+
+const textSelectors = 'h1, h2, h3, h4, h5, h6, p, li, td, th, span, div, a, label, .quote-text, .quote-author, .step-title, .step-desc, .feature-header, .feature-body p, .timeline-card h4, .timeline-card p, .info-card h4, .info-card p, .welcome-list li';
+const imgSelectors = '.deco, .deco svg, svg';
+
+toggleBtn.onclick = () => {
+  editMode = !editMode;
+  toggleBtn.textContent = editMode ? '关闭' : '开启';
+  toggleBtn.classList.toggle('active', editMode);
+  toolbarBody.style.display = editMode ? 'block' : 'none';
+  document.body.classList.toggle('edit-mode', editMode);
+  if (!editMode && selectedElement) {
+    selectedElement.classList.remove('element-selected');
+    selectedElement = null;
+    selectedInfo.textContent = '点击选择元素';
+    textEditor.value = '';
+  }
+};
+
+let isSelecting = false;
+let selectionStartX, selectionStartY;
+let selectionBox = null;
+
+function createSelectionBox() {
+  if (!selectionBox) {
+    selectionBox = document.createElement('div');
+    selectionBox.id = 'selectionBox';
+    selectionBox.style.cssText = 'position:fixed;border:2px dashed #F8635F;background:rgba(248,99,95,0.1);pointer-events:none;z-index:9999;display:none;';
+    document.body.appendChild(selectionBox);
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!editMode || isSelecting) return;
+  const target = e.target;
+  if (target.closest('.edit-toolbar')) return;
+  const isImgElement = target.matches(imgSelectors) || target.closest('.deco');
+  const isTextElement = !isImgElement && target.matches(textSelectors);
+  if (isTextElement || isImgElement) {
+    e.stopPropagation();
+    if (selectedElement) {
+      selectedElement.classList.remove('element-selected');
+      selectedElement.style.cursor = '';
+      delete selectedElement.dataset.moveInit;
+    }
+    selectedElement = isImgElement && !target.matches('.deco') ? target.closest('.deco') : target;
+    selectedElement.classList.add('element-selected');
+    const tagName = selectedElement.tagName.toLowerCase();
+    const className = selectedElement.className ? `.${selectedElement.className.split(' ')[0]}` : '';
+    if (isImgElement) {
+      selectedInfo.textContent = `图形元素 ${className}`;
+      textEditor.value = '（图形元素 - 可拖动/缩放）';
+      textEditor.disabled = true;
+      selectedElement.style.cursor = 'move';
+      selectedImgScale = 1;
+      document.getElementById('textEditSection').style.display = 'none';
+      document.getElementById('graphicEditSection').style.display = 'block';
+    } else {
+      const text = selectedElement.textContent ? selectedElement.textContent.substring(0, 30) : '';
+      selectedInfo.textContent = `${tagName.toUpperCase()}${className}: ${text}...`;
+      textEditor.value = selectedElement.textContent;
+      textEditor.disabled = false;
+      document.getElementById('textEditSection').style.display = 'block';
+      document.getElementById('graphicEditSection').style.display = 'none';
+    }
+  }
+});
+
+document.getElementById('applyText').onclick = () => {
+  if (!selectedElement) { alert('请先选择一个文字元素'); return; }
+  const isTextElement = selectedElement.matches(textSelectors) && !selectedElement.matches(imgSelectors);
+  if (!isTextElement) { alert('选中的不是文字元素'); return; }
+  const newText = textEditor.value.trim();
+  if (newText) {
+    selectedElement.textContent = newText;
+    selectedInfo.textContent = `${selectedElement.tagName}: ${newText.substring(0, 20)}...`;
+  }
+};
+
+document.getElementById('confirmGraphic').onclick = () => {
+  if (!selectedElement) { alert('请先选择一个图形元素'); return; }
+  selectedElement.classList.remove('element-selected');
+  selectedElement.style.cursor = '';
+  selectedElement.style.outline = '';
+  const className = selectedElement.className ? `.${selectedElement.className.split(' ')[0]}` : '';
+  selectedInfo.textContent = `已确认: ${className}`;
+  selectedElement = null;
+  selectedImgScale = 1;
+  imgSizeValue.textContent = '100%';
+};
+
+document.getElementById('saveHtml').onclick = () => {
+  const docClone = document.documentElement.cloneNode(true);
+  const toolbar = docClone.querySelector('.edit-toolbar');
+  if (toolbar) toolbar.remove();
+  const selBox = docClone.querySelector('#selectionBox');
+  if (selBox) selBox.remove();
+  const styleTags = docClone.querySelectorAll('style');
+  styleTags.forEach(style => {
+    let css = style.textContent;
+    css = css.replace(/\.edit-toolbar[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.toolbar-header[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.toggle-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.toolbar-body[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.tool-section[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.size-controls[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.size-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.size-value[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.selected-info[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.hint-text[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.reset-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.text-editor[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.apply-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.move-controls[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.move-row[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.move-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.graphic-tips[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.confirm-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.save-btn[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.element-selected[^}]*\{[^}]*\}/g, '');
+    css = css.replace(/\.edit-mode[^}]*\{[^}]*\}/g, '');
+    style.textContent = css;
+  });
+  const scriptTags = docClone.querySelectorAll('script');
+  scriptTags.forEach(script => {
+    if (script.textContent.includes('editMode') || script.textContent.includes('edit-toolbar') || script.textContent.includes('selectedElement')) {
+      script.remove();
+    }
+  });
+  const allElements = docClone.querySelectorAll('*');
+  allElements.forEach(el => {
+    el.classList.remove('element-selected');
+    delete el.dataset.moveInit;
+    el.style.cursor = '';
+  });
+  const htmlContent = '<!DOCTYPE html>\n<html lang="zh-CN">\n' + docClone.innerHTML + '\n</html>';
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'html-vs-ppt-edited.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert('HTML文件已保存！\n保存的文件不包含编辑工具栏。');
+};
+
+let isDragging = false;
+let dragStartX, dragStartY;
+let elementStartX, elementStartY;
+
+function startDrag(e) {
+  if (!editMode || !selectedElement) return false;
+  const isImgElement = selectedElement.classList.contains('deco') || selectedElement.tagName.toLowerCase() === 'svg' || selectedElement.closest('.deco');
+  if (!isImgElement) return false;
+  if (e.target === selectedElement || selectedElement.contains(e.target)) {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    const slide = selectedElement.closest('.slide');
+    if (!slide) return false;
+    if (!selectedElement.dataset.moveInit) {
+      const elementRect = selectedElement.getBoundingClientRect();
+      const slideRect = slide.getBoundingClientRect();
+      elementStartX = elementRect.left - slideRect.left;
+      elementStartY = elementRect.top - slideRect.top;
+      selectedElement.dataset.moveInit = 'true';
+    } else {
+      elementStartX = parseFloat(selectedElement.style.left) || 0;
+      elementStartY = parseFloat(selectedElement.style.top) || 0;
+    }
+    e.preventDefault();
+    return true;
+  }
+  return false;
+}
+
+document.addEventListener('mousedown', (e) => {
+  if (!editMode) return;
+  if (e.target.closest('.edit-toolbar')) return;
+  if (selectedElement && startDrag(e)) return;
+  if (!e.target.closest('.edit-toolbar') && !(selectedElement && (e.target === selectedElement || selectedElement.contains(e.target)))) {
+    createSelectionBox();
+    isSelecting = true;
+    selectionStartX = e.clientX;
+    selectionStartY = e.clientY;
+    selectionBox.style.left = selectionStartX + 'px';
+    selectionBox.style.top = selectionStartY + 'px';
+    selectionBox.style.width = '0px';
+    selectionBox.style.height = '0px';
+    selectionBox.style.display = 'block';
+  }
+}, true);
+
+document.addEventListener('mousemove', (e) => {
+  if (isDragging && selectedElement) {
+    const deltaX = e.clientX - dragStartX;
+    const deltaY = e.clientY - dragStartY;
+    selectedElement.style.position = 'absolute';
+    selectedElement.style.left = (elementStartX + deltaX) + 'px';
+    selectedElement.style.top = (elementStartY + deltaY) + 'px';
+    selectedElement.style.right = 'auto';
+    selectedElement.style.bottom = 'auto';
+    return;
+  }
+  if (!isSelecting || !selectionBox) return;
+  const left = Math.min(selectionStartX, e.clientX);
+  const top = Math.min(selectionStartY, e.clientY);
+  selectionBox.style.left = left + 'px';
+  selectionBox.style.top = top + 'px';
+  selectionBox.style.width = Math.abs(e.clientX - selectionStartX) + 'px';
+  selectionBox.style.height = Math.abs(e.clientY - selectionStartY) + 'px';
+});
+
+document.addEventListener('mouseup', (e) => {
+  if (isDragging) { isDragging = false; return; }
+  if (!isSelecting || !selectionBox) return;
+  isSelecting = false;
+  const boxRect = selectionBox.getBoundingClientRect();
+  selectionBox.style.display = 'none';
+  if (boxRect.width < 10 && boxRect.height < 10) return;
+  const allDecos = document.querySelectorAll('.deco');
+  let foundElement = null;
+  allDecos.forEach(deco => {
+    const decoRect = deco.getBoundingClientRect();
+    if (decoRect.left < boxRect.right && decoRect.right > boxRect.left && decoRect.top < boxRect.bottom && decoRect.bottom > boxRect.top) {
+      foundElement = deco;
+    }
+  });
+  if (foundElement) {
+    if (selectedElement) {
+      selectedElement.classList.remove('element-selected');
+      selectedElement.style.cursor = '';
+      delete selectedElement.dataset.moveInit;
+    }
+    selectedElement = foundElement;
+    selectedElement.classList.add('element-selected');
+    selectedElement.style.cursor = 'move';
+    selectedImgScale = 1;
+    const className = selectedElement.className ? `.${selectedElement.className.split(' ')[0]}` : '';
+    selectedInfo.textContent = `图形元素 ${className} (框选)`;
+    textEditor.value = '（图形元素 - 可拖动/缩放）';
+    textEditor.disabled = true;
+    document.getElementById('textEditSection').style.display = 'none';
+    document.getElementById('graphicEditSection').style.display = 'block';
+  }
+});
+
+document.addEventListener('wheel', (e) => {
+  if (!editMode || !selectedElement) return;
+  const isImgElement = selectedElement.matches(imgSelectors) || selectedElement.closest('.deco');
+  if (!isImgElement) return;
+  if (e.target === selectedElement || selectedElement.contains(e.target)) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    selectedImgScale = Math.max(0.2, Math.min(5, selectedImgScale + delta));
+    if (!originalStyles.has(selectedElement)) {
+      const rect = selectedElement.getBoundingClientRect();
+      originalStyles.set(selectedElement, { width: rect.width, height: rect.height });
+    }
+    const original = originalStyles.get(selectedElement);
+    selectedElement.style.width = (original.width * selectedImgScale) + 'px';
+    selectedElement.style.height = (original.height * selectedImgScale) + 'px';
+    selectedInfo.textContent = `图形元素 (缩放: ${Math.round(selectedImgScale * 100)}%)`;
+  }
+}, { passive: false });
+
+const moveStep = 10;
+
+function moveElement(direction) {
+  if (!selectedElement) { alert('请先选择一个元素'); return; }
+  const slide = selectedElement.closest('.slide');
+  if (!slide) return;
+  if (!selectedElement.dataset.moveInit) {
+    const elementRect = selectedElement.getBoundingClientRect();
+    const slideRect = slide.getBoundingClientRect();
+    selectedElement.style.position = 'absolute';
+    selectedElement.style.left = (elementRect.left - slideRect.left) + 'px';
+    selectedElement.style.top = (elementRect.top - slideRect.top) + 'px';
+    selectedElement.style.right = 'auto';
+    selectedElement.style.bottom = 'auto';
+    selectedElement.dataset.moveInit = 'true';
+  }
+  let currentLeft = parseFloat(selectedElement.style.left) || 0;
+  let currentTop = parseFloat(selectedElement.style.top) || 0;
+  if (direction === 'up') selectedElement.style.top = (currentTop - moveStep) + 'px';
+  if (direction === 'down') selectedElement.style.top = (currentTop + moveStep) + 'px';
+  if (direction === 'left') selectedElement.style.left = (currentLeft - moveStep) + 'px';
+  if (direction === 'right') selectedElement.style.left = (currentLeft + moveStep) + 'px';
+}
+
+document.getElementById('moveUp').onclick = () => moveElement('up');
+document.getElementById('moveDown').onclick = () => moveElement('down');
+document.getElementById('moveLeft').onclick = () => moveElement('left');
+document.getElementById('moveRight').onclick = () => moveElement('right');
+
+document.addEventListener('keydown', (e) => {
+  if (!editMode || !selectedElement) return;
+  if (document.activeElement === textEditor) return;
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+    if (e.key === 'ArrowUp') moveElement('up');
+    if (e.key === 'ArrowDown') moveElement('down');
+    if (e.key === 'ArrowLeft') moveElement('left');
+    if (e.key === 'ArrowRight') moveElement('right');
+  }
+});
+
+document.getElementById('fontSmaller').onclick = () => {
+  if (fontScale > 0.5) {
+    fontScale -= 0.1;
+    applyFontScale();
+    fontSizeValue.textContent = Math.round(fontScale * 100) + '%';
+  }
+};
+
+document.getElementById('fontBigger').onclick = () => {
+  if (fontScale < 2) {
+    fontScale += 0.1;
+    applyFontScale();
+    fontSizeValue.textContent = Math.round(fontScale * 100) + '%';
+  }
+};
+
+function applyFontScale() {
+  const textElements = document.querySelectorAll('.slide h1, .slide h2, .slide h3, .slide h4, .slide p, .slide li, .slide td, .slide th');
+  textElements.forEach(el => {
+    if (!originalStyles.has(el)) {
+      originalStyles.set(el, { fontSize: window.getComputedStyle(el).fontSize });
+    }
+    const original = originalStyles.get(el);
+    el.style.fontSize = (parseFloat(original.fontSize) * fontScale) + 'px';
+  });
+}
+
+document.getElementById('imgSmaller').onclick = () => {
+  if (!selectedElement) { alert('请先选择一个图形元素'); return; }
+  const isImgElement = selectedElement.classList.contains('deco') || selectedElement.tagName.toLowerCase() === 'svg' || selectedElement.closest('.deco');
+  if (!isImgElement) { alert('选中的不是图形元素'); return; }
+  if (selectedImgScale > 0.2) {
+    selectedImgScale -= 0.1;
+    applySelectedImgScale();
+    imgSizeValue.textContent = Math.round(selectedImgScale * 100) + '%';
+  }
+};
+
+document.getElementById('imgBigger').onclick = () => {
+  if (!selectedElement) { alert('请先选择一个图形元素'); return; }
+  const isImgElement = selectedElement.classList.contains('deco') || selectedElement.tagName.toLowerCase() === 'svg' || selectedElement.closest('.deco');
+  if (!isImgElement) { alert('选中的不是图形元素'); return; }
+  if (selectedImgScale < 5) {
+    selectedImgScale += 0.1;
+    applySelectedImgScale();
+    imgSizeValue.textContent = Math.round(selectedImgScale * 100) + '%';
+  }
+};
+
+function applySelectedImgScale() {
+  if (!selectedElement) return;
+  let targetEl = selectedElement;
+  if (selectedElement.tagName.toLowerCase() === 'svg' || selectedElement.closest('.deco')) {
+    targetEl = selectedElement.closest('.deco') || selectedElement;
+  }
+  if (!originalStyles.has(targetEl)) {
+    const rect = targetEl.getBoundingClientRect();
+    originalStyles.set(targetEl, { width: rect.width, height: rect.height });
+  }
+  const original = originalStyles.get(targetEl);
+  targetEl.style.width = (original.width * selectedImgScale) + 'px';
+  targetEl.style.height = (original.height * selectedImgScale) + 'px';
+  selectedInfo.textContent = `图形元素 (缩放: ${Math.round(selectedImgScale * 100)}%)`;
+}
+
+document.getElementById('resetAll').onclick = () => {
+  if (selectedElement) {
+    selectedElement.style.fontSize = '';
+    selectedElement.style.width = '';
+    selectedElement.style.height = '';
+    selectedElement.style.left = '';
+    selectedElement.style.top = '';
+    selectedElement.style.right = '';
+    selectedElement.style.bottom = '';
+    selectedElement.style.position = '';
+    delete selectedElement.dataset.moveInit;
+    originalStyles.delete(selectedElement);
+    const isImgElement = selectedElement.classList.contains('deco') || selectedElement.tagName.toLowerCase() === 'svg' || selectedElement.closest('.deco');
+    if (isImgElement) {
+      selectedImgScale = 1;
+      imgSizeValue.textContent = '100%';
+      selectedInfo.textContent = `图形元素 (已重置)`;
+    } else {
+      selectedInfo.textContent = `文字元素 (已重置)`;
+    }
+  } else {
+    fontScale = 1;
+    selectedImgScale = 1;
+    fontSizeValue.textContent = '100%';
+    imgSizeValue.textContent = '100%';
+    const allElements = document.querySelectorAll('.slide h1, .slide h2, .slide h3, .slide h4, .slide p, .slide li, .slide td, .slide th, .deco');
+    allElements.forEach(el => {
+      el.style.fontSize = '';
+      el.style.width = '';
+      el.style.height = '';
+      el.style.left = '';
+      el.style.top = '';
+      el.style.right = '';
+      el.style.bottom = '';
+      el.style.position = '';
+      delete el.dataset.moveInit;
+    });
+    originalStyles.clear();
+    selectedInfo.textContent = '已重置所有元素';
+  }
+};
+</script>
+</body>
+</html>
